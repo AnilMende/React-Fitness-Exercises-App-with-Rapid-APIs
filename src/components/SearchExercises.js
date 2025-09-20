@@ -1,20 +1,54 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-import { exerciseOptions,fetchData } from "../utils/fetchData";
-const SearchExercises = () => {
 
+import { fetchData, exerciseOptions } from "../test";
+
+import HorizontalScrollbar from "./HorizontalScrollbar";
+
+
+
+const SearchExercises = ({setExercises,bodyPart, setBodyPart}) => {
     // state for the search input
     const [search, setSearch] = useState('');
 
-    // to handle the onclick event on the button
 
+    // when the user opens we have to show the categories
+    // by using the bodyPartList we can display the different categories
+    const [bodyParts, setBodyParts] = useState([]);
+
+    useEffect(() => {
+
+        const fetchExercisesData = async () => {
+            const bodyPartsData = await fetchData('https://exercisedb.p.rapidapi.com/exercises/bodyPartList', exerciseOptions);
+            setBodyParts(['all', ...bodyPartsData]);
+        }
+        // we are calling the function as soon as the app loads
+        fetchExercisesData();
+    },[])
+
+
+
+    // to handle the onclick event on the button
     const handleSearch = async () => {
 
-        const exerciseData = await fetchData('https://exercisedb.p.rapidapi.com/exercises/targetList', exerciseOptions);
+        if(search){
 
-        console.log(exerciseData);
+            const exercisesData = await fetchData('https://exercisedb.p.rapidapi.com/exercises', exerciseOptions);
+            // console.log(exercisesData);
+
+            const searchedExercises = exercisesData.filter(
+                 (exercise) => exercise.name.toLowerCase().includes(search)
+                 ||  exercise.target.toLowerCase().includes(search)
+                 ||  exercise.equipment.toLowerCase().includes(search)
+                 ||  exercise.bodyPart.toLowerCase().includes(search)
+                );
+
+                setSearch('');
+                setExercises(searchedExercises);
+        }
     }
+
+
     return(
         <Stack alignItems="center" mt="37px" 
         justifyContent="center" p="20px" >
@@ -51,7 +85,13 @@ const SearchExercises = () => {
                       onClick={handleSearch}
                     >Search</Button>
             </Box>
-            
+            {/* for BodyParts category horizontalscrollbar */}
+            <Box sx={{position:'relative', width:'100%', p:'20px'}}>
+                {/* it is using the prop data */}
+                <HorizontalScrollbar data={bodyParts} 
+                bodyPart={bodyPart} setBodyPart={setBodyPart}/>
+                
+            </Box>
         </Stack>
     )
 }
